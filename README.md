@@ -3,7 +3,7 @@
  node-tileserver is a lightweight tileserver using [NodeJS](http://nodejs.org/). It can serve bitmap and vector tiles and is designed as a fast and easy-to-install tileserver for rendering OpenStreetMap data. It works perfectly with an osm2pgsql database and Leaflet and KothicJS on the client side.
 
  See the [OpenStreetMap Wiki](http://wiki.openstreetmap.org/wiki/Node-tileserver) or the [Github repository](https://github.com/rurseekatze/node-tileserver) for more information.
-
+ 
 ## Features
 
  * Serves tiles bitmap tiles usable in Leaflet or OpenLayers
@@ -102,15 +102,25 @@
 
     $ echo "ALTER FUNCTION hstore2json(hs public.hstore) OWNER TO apache;"  | psql -d railmap
 
+ Now you can load some data into your database:
+
+    $ osm2pgsql --create --database railmap --username railmap --prefix railmap --slim --style railmap.style --hstore-all --cache 512 railways.osm
+ 
+ Make sure your data uses the correct SRID:
+ 
+    $ echo "SELECT Find_SRID('public', 'DBPREFIX_point', 'way');" | psql -d railmap
+ 
+ If the result is not 900913 you need to update it for each table that contains geometry data:
+ 
+    $ echo "SELECT UpdateGeometrySRID('DBPREFIX_point','way',900913);" | psql -d railmap
+
+ In a future version the SRID will be configurable in the config.json file.
+
  For higher performance you should create some indexes:
 
     $ echo "CREATE INDEX railmap_point_tags ON railmap_point USING GIN (tags);" | psql -d railmap
     $ echo "CREATE INDEX railmap_line_tags ON railmap_line USING GIN (tags);" | psql -d railmap
     $ echo "CREATE INDEX railmap_polygon_tags ON railmap_polygon USING GIN (tags);" | psql -d railmap
-
- Now you can load some data into your database:
-
-    $ osm2pgsql --create --database railmap --username railmap --prefix railmap --slim --style railmap.style --hstore --cache 512 railways.osm
 
  Have a look at an [example toolchain](https://github.com/rurseekatze/OpenRailwayMap/blob/master/import/import.sh) for an example of using osm2pgsql with filtered data.
 
